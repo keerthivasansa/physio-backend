@@ -1,0 +1,48 @@
+{
+    "ts-node": {
+        // these options are overrides used only by ts-node
+        // same as the --compilerOptions flag and the TS_NODE_COMPILER_OPTIONS environment variable
+        "include": [
+            "routes/**/*.ts",
+            "*.ts",
+            "lib/**/*.ts",
+        ],
+        "compilerOptions": {
+            "moduleResolution": "node", // was not set before, but is the default
+            "module": "CommonJS",
+            "baseUrl": ".",
+            "esModuleInterop": true,
+            "paths": {
+                "$lib/*": [
+                    "lib/*"
+                ],
+                "$src/*": [
+                    "src/*"
+                ],
+            }
+        }
+    },
+    "files": [
+        "index.ts",
+        "custom.d.ts",
+    ],
+    "include": [
+        "routes/**/*.ts",
+        "*.ts",
+        "lib/**/*.ts",
+    ],
+    "compilerOptions": {
+        "moduleResolution": "node", // was not set before, but is the default
+        "module": "esnext",
+        "baseUrl": ".",
+        "esModuleInterop": true,
+        "paths": {
+            "$lib/*": [
+                "lib/*"
+            ],
+            "$src/*": [
+                "src/*"
+            ],
+        }
+    }
+}
