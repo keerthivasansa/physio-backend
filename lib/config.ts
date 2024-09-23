@@ -10,8 +10,6 @@ export const secrets = {
     MINIO_SECRET_KEY: process.env.MINIO_SECRET_KEY,
 };
 
-console.log(secrets);
-
 Object.keys(secrets).forEach((key) => {
     if (!secrets[key])
         throw new Error("Secret missing: " + key);
