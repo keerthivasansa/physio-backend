@@ -1,4 +1,4 @@
-import { text, boolean, mysqlTable, varchar, date, json, primaryKey } from "drizzle-orm/mysql-core";
+import { text, boolean, mysqlTable, varchar, date, json, primaryKey, int } from "drizzle-orm/mysql-core";
 
 export const users = mysqlTable("users", {
     id: varchar("id", { length: 64 }).primaryKey(),
@@ -9,9 +9,11 @@ export const users = mysqlTable("users", {
 
 export const patient = mysqlTable("patients", {
     id: varchar("id", { length: 64 }).primaryKey(),
-    doctorId: varchar("doctorId", { length: 64 }),
-    startDate: date("startDate")
-})
+    doctorId: varchar("doctorId", { length: 64 }).notNull(),
+    startDate: date("startDate").notNull(),
+    totalDays: int("totalDays").notNull(),
+    age: int("age").notNull()
+});
 
 export const entry = mysqlTable("dayEntry", {
     date: date("date"),
@@ -20,11 +22,16 @@ export const entry = mysqlTable("dayEntry", {
     remarks: text("remarks")
 }, (t) => ({
     id: primaryKey({ columns: [t.date, t.patientId] }),
-}))
+}));
 
 export const exercise = mysqlTable("exercise", {
-    videoUrl: text("url").primaryKey(),
-    patientId: varchar("patientId", { length: 64 })
-});
+    videoName: text("filename").notNull(),
+    patientId: varchar("patientId", { length: 64 }),
+    doctorId: varchar("doctorId", { length: 64 }),
+    day: int("day").notNull(),
+    exerciseNo: int("exerciseNo").notNull(),
+}, (t) => ({
+    id: primaryKey({ columns: [t.day, t.doctorId, t.patientId, t.exerciseNo] }),
+}));
 
 export type User = typeof users.$inferSelect;

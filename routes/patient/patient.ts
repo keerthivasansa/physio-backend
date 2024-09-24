@@ -1,7 +1,7 @@
 import { db } from "$lib/db";
-import { entry, exercise } from "$lib/db/schema";
+import { entry, exercise, patient } from "$lib/db/schema";
 import { getSignedUrl } from "$lib/storage/minio";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { createRouteGroup } from "routes/group";
 
 
@@ -14,21 +14,26 @@ const Patient = createRouteGroup({
             return res.status(401).send("Not logged in");
 
         const days = await db.select().from(entry).where(eq(entry.patientId, user.id));
-        
+        const info = await db.select().from(patient).where(eq(patient.id, user.id)).limit(1);
+
         const completed = days.length;
         const avg = {};
-        
+
+        const params = days.length ? Object.keys(days[0].parameters) : [];
+
+        for (let p of params)
+            avg[p] = 0;
+
         for (let d of days) {
-            Object.keys(d.parameters).forEach(key => {
-                avg[key] += d.parameters[key];
-            })
+            for (let p of params)
+                    avg[p] += (d.parameters[p] || 0);
         }
 
-        Object.keys(avg).forEach(key => {
+        params.forEach(key => {
             avg[key] /= completed;
         });
 
-        return res.json({ completed, avg });
+        return res.json({ completed, avg, info: info[0] });
     },
 
     // day entry
@@ -47,13 +52,21 @@ const Patient = createRouteGroup({
     // get videos
     async getVideos(req, res) {
         const user = req.user;
-        if (!user)
-            return res.status(401).send("Not logged in");
+        const day = req.query['day'].toString();
+
+        if (!user || !day)
+            return res.status(401).send("Invalid request");
+
         const id = user.id;
 
-        const videos = await db.select().from(exercise).where(eq(exercise.patientId, id));
+        const videos = await db.select().from(exercise).where(
+            and(
+                eq(exercise.patientId, id),
+                eq(exercise.day, Number(day)),
+            )
+        );
 
-        const urls = await Promise.all(videos.map(vid => getSignedUrl(vid.videoUrl, "exercise", 1800)));
+        const urls = await Promise.all(videos.map(vid => getSignedUrl(vid.videoName, "exercise", 1800)));
 
         res.json(urls);
     }
