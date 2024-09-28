@@ -1,15 +1,14 @@
 {
   "name": "physio-backend",
-  "main": "dist/index.js",
+  "main": "index.ts",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
     "dev": "ts-node -r tsconfig-paths/register index.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "start": "bun run index.ts"
   },
   "author": "",
   "license": "ISC",
