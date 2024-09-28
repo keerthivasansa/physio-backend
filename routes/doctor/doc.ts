@@ -1,7 +1,6 @@
 import { db } from "$lib/db";
 import { entry, exercise, patient, users } from "$lib/db/schema";
 import { uploadFile } from "$lib/storage/minio";
-import { hash } from "bcrypt";
 import { and, eq } from "drizzle-orm";
 import { createRouteGroup } from "routes/group";
 import { Readable } from "stream";
@@ -11,7 +10,7 @@ export const Doctor = createRouteGroup({
 
     async register(req, res) {
         const { id, password } = req.body;
-        const hashed = await hash(password, 10);
+        const hashed = await Bun.password.hash(password);
         users.$inferInsert
 
         // @ts-ignore
@@ -33,7 +32,7 @@ export const Doctor = createRouteGroup({
 
         const date = new Date(startDate);
 
-        const h = await hash(password, 10);
+        const h = await Bun.password.hash(password);
 
         await db.insert(users).values({
             id,

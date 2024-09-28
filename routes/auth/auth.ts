@@ -4,7 +4,6 @@ import { db } from "$lib/db";
 import { users } from "$lib/db/schema";
 import { secrets } from "$lib/config";
 import { eq } from "drizzle-orm";
-import { compare, hash } from "bcrypt";
 
 export const Auth = createRouteGroup({
     login: async (req, res) => {
@@ -13,7 +12,7 @@ export const Auth = createRouteGroup({
         if (!user.length)
             return res.status(400).send("Invalid credentials");
 
-        let isValid = await compare(password, user[0].password);
+        let isValid = await Bun.password.verify(password, user[0].password);
         if (!isValid)
             return res.status(400).send("Invalid credentials");
 
@@ -24,7 +23,7 @@ export const Auth = createRouteGroup({
     signUp: async (req, res) => {
         const { id, password } = req.body;
 
-        const hashed = await hash(password, 10);
+        const hashed = await Bun.password.hash(password);
 
         await db.insert(users).values({
             id,
