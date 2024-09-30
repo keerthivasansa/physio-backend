@@ -3,6 +3,7 @@ import { entry, exercise, patient } from "$lib/db/schema";
 import { getSignedUrl } from "$lib/storage/minio";
 import { and, eq } from "drizzle-orm";
 import { createRouteGroup } from "routes/group";
+import { getDayDelta } from "./patient.service";
 
 
 const Patient = createRouteGroup({
@@ -22,11 +23,11 @@ const Patient = createRouteGroup({
         const params = days.length ? Object.keys(days[0].parameters) : [];
 
         for (let p of params)
-            avg[p] = 0;
+            avg[p] = 0.0;
 
         for (let d of days) {
             for (let p of params)
-                    avg[p] += (d.parameters[p] || 0);
+                avg[p] += (d.parameters[p] || 0);
         }
 
         params.forEach(key => {
@@ -47,22 +48,31 @@ const Patient = createRouteGroup({
         const patientId = user.id;
 
         await db.insert(entry).values({ parameters, remarks, date, patientId });
+        res.send("success");
     },
 
     // get videos
     async getVideos(req, res) {
         const user = req.user;
-        const day = req.query['day'].toString();
 
-        if (!user || !day)
+        if (!user || user.isDoctor)
             return res.status(401).send("Invalid request");
 
+        const pRes = await db.select().from(patient).where(eq(patient.id, user.id));
+        const pInfo = pRes.length && pRes[0] ? pRes[0] : null;
+        if (!pInfo)
+            return res.status(404).send('Missing patient details');
+
+        // const day = getDayDelta(pInfo.startDate);
+        const day = 0;
         const id = user.id;
+
+        console.log('Fetching video for patient', id, ', day:', day);
 
         const videos = await db.select().from(exercise).where(
             and(
                 eq(exercise.patientId, id),
-                eq(exercise.day, Number(day)),
+                eq(exercise.day, day),
             )
         );
 

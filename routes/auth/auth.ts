@@ -17,7 +17,7 @@ export const Auth = createRouteGroup({
             return res.status(400).send("Invalid credentials");
 
         const token = sign({ sub: id }, secrets.JWT_SECRET!);
-        res.send(token);
+        res.json({ token, isDoctor: user[0].isDoctor });
     },
 
     signUp: async (req, res) => {

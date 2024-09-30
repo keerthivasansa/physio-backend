@@ -1,10 +1,10 @@
 import { db } from "$lib/db";
 import { entry, exercise, patient, users } from "$lib/db/schema";
 import { uploadFile } from "$lib/storage/minio";
-import { and, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { createRouteGroup } from "routes/group";
 import { Readable } from "stream";
-import { getPatient } from "./doc.service";
+import { getPatient, saveVideo } from "./doc.service";
 
 export const Doctor = createRouteGroup({
 
@@ -15,9 +15,9 @@ export const Doctor = createRouteGroup({
 
         // @ts-ignore
         await db.insert(users).values({
-            id, 
+            id,
             password: hashed,
-            name: id, 
+            name: id,
             isDoctor: true,
         });
 
@@ -109,22 +109,98 @@ export const Doctor = createRouteGroup({
         return res.json({ info, entries });
     },
 
+    async savePatientVideoData(req, res) {
+        const user = req.user;
+
+        if (!user || !user.isDoctor)
+            return res.sendStatus(403);
+
+        const fileMap = new Map<String, Express.Multer.File>();
+
+        if (req.files) {
+            (req.files as Express.Multer.File[]).forEach(file => {
+                fileMap.set(file.originalname, file);
+            });
+        }
+        // [[string]]
+
+        const info = req.body as {
+            day: number,
+            patient: string,
+            exercises: string[],
+        };
+
+        let alreadySaved = await db.select().from(exercise).where(
+            and(
+                eq(exercise.day, info.day),
+                eq(exercise.patientId, info.patient),
+                eq(exercise.doctorId, user.id)
+            )
+        );
+
+        let toSave = info.exercises || [];
+        const processed = new Set<string>();
+
+        const matchSqlQuery = (name: string) => and(
+            eq(exercise.day, info.day),
+            eq(exercise.patientId, info.patient),
+            eq(exercise.doctorId, user.id),
+            eq(exercise.videoName, name),
+        )
+
+        for (let ex of alreadySaved) {
+            if (!toSave.includes(ex.videoName)) {
+                // remove file.
+                await db.delete(exercise).where(
+                    matchSqlQuery(ex.videoName)
+                ).execute();
+                console.log('removed: ', ex.videoName);
+            } else {
+                // update entry.
+                const newIndex = toSave.indexOf(ex.videoName);
+                console.log('updating: ', ex.videoName, 'from', ex.exerciseNo, 'to', newIndex);
+                await db.update(exercise).set({
+                    exerciseNo: newIndex,
+                }).where(
+                    matchSqlQuery(ex.videoName)
+                ).execute();
+            }
+            processed.add(ex.videoName);
+        }
+
+        toSave.forEach((ex, ind) => {
+            if (processed.has(ex))
+                return;
+            const file = fileMap.get(ex);
+            console.log('adding new file: ', ex);
+            saveVideo(info.day, info.patient, req.user.id, ind, ex, file);
+        });
+
+        res.send("success");
+    },
+
+
     async getVideos(req, res) {
         const user = req.user;
         const patientId = req.query['patientId'].toString();
-        const day = req.query['day'].toString();
 
-        if (!user || !user.isDoctor || !patientId || !day)
+        if (!user || !user.isDoctor || !patientId)
             return res.sendStatus(403);
-        
+
         const videos = await db.select().from(exercise).where(
             and(
                 eq(exercise.patientId, patientId),
                 eq(exercise.doctorId, user.id),
-                eq(exercise.day, Number(day)),
-            )
-        );
+            ),
+        ).orderBy(asc(exercise.day), asc(exercise.exerciseNo));
 
-        res.json(videos);
+        const days = {};
+
+        videos.forEach(vid => {
+            days[vid.day] ??= [];
+            days[vid.day].push(vid);
+        });
+
+        res.json(days);
     }
 });

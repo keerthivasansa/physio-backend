@@ -25,13 +25,13 @@ export const entry = mysqlTable("dayEntry", {
 }));
 
 export const exercise = mysqlTable("exercise", {
-    videoName: text("filename").notNull(),
-    patientId: varchar("patientId", { length: 64 }),
-    doctorId: varchar("doctorId", { length: 64 }),
+    videoName: varchar("filename", { length: 256 }).notNull(),
+    patientId: varchar("patientId", { length: 64 }).notNull(),
+    doctorId: varchar("doctorId", { length: 64 }).notNull(),
     day: int("day").notNull(),
     exerciseNo: int("exerciseNo").notNull(),
 }, (t) => ({
-    id: primaryKey({ columns: [t.day, t.doctorId, t.patientId, t.exerciseNo] }),
+    id: primaryKey({ columns: [t.day, t.doctorId, t.patientId, t.videoName] }),
 }));
 
 export type User = typeof users.$inferSelect;

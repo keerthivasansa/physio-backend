@@ -34,7 +34,6 @@ export function registerRoutes(app: Application) {
     
     app.post("/doctor/register", Doctor.register)
     app.post("/doctor/add-patient", Doctor.addPatient)
-    app.post("/doctor/upload", upload.single('file'), Doctor.uploadVideo)
-
+    app.post("/doctor/videos/save", upload.any(), Doctor.savePatientVideoData)
 }
 
