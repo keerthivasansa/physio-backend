@@ -25,6 +25,14 @@ export const entry = mysqlTable("dayEntry", {
     id: primaryKey({ columns: [t.date, t.patientId] }),
 }));
 
+export const replies = mysqlTable("replies", {
+    reply: text("reply"),
+    patientId: varchar("patientId", { length: 64 }),
+    day: int("day"),
+}, (t) => ({
+    id: primaryKey({ columns: [t.day, t.patientId] }),
+}));
+
 export const exercise = mysqlTable("exercise", {
     videoName: varchar("filename", { length: 256 }).notNull(),
     patientId: varchar("patientId", { length: 64 }).notNull(),

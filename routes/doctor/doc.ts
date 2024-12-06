@@ -1,5 +1,5 @@
 import { db } from "$lib/db";
-import { entry, exercise, patient, users } from "$lib/db/schema";
+import { entry, exercise, patient, replies, users } from "$lib/db/schema";
 import { uploadFile } from "$lib/storage/minio";
 import { and, asc, count, desc, eq, max } from "drizzle-orm";
 import { createRouteGroup } from "routes/group";
@@ -41,8 +41,8 @@ export const Doctor = createRouteGroup({
         const dayCount = {};
 
         result.forEach(res => {
-            dayCount[res.day+1] ??= 0;
-            dayCount[res.day+1] += 1;
+            dayCount[res.day + 1] ??= 0;
+            dayCount[res.day + 1] += 1;
         });
 
         dayCount[0] = patientCount - result.length;
@@ -237,5 +237,15 @@ export const Doctor = createRouteGroup({
         });
 
         res.json(days);
+    },
+
+    async saveReply(req, res) {
+        const { patientId, reply, day } = req.body;
+        await db.insert(replies).values({
+            reply,
+            patientId,
+            day
+        })
+        res.send('ok');
     }
 });

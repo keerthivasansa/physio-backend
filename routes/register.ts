@@ -32,6 +32,7 @@ export function registerRoutes(app: Application) {
     app.get("/doctor/patient", Doctor.getPatientData)
     app.get("/doctor/patient/videos", Doctor.getVideos)
     app.get("/doctor/dashboard", Doctor.getDashboard)
+    app.get("/doctor/replies/save", Doctor.saveReply)
     
     app.post("/doctor/register", Doctor.register)
     app.post("/doctor/add-patient", Doctor.addPatient)

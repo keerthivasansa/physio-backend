@@ -1,5 +1,5 @@
 import { db } from "$lib/db";
-import { entry, exercise, patient } from "$lib/db/schema";
+import { entry, exercise, patient, replies } from "$lib/db/schema";
 import { getSignedUrl } from "$lib/storage/minio";
 import { and, asc, eq } from "drizzle-orm";
 import { createRouteGroup } from "routes/group";
@@ -78,6 +78,12 @@ const Patient = createRouteGroup({
         const urls = await Promise.all(videos.map(vid => getSignedUrl(vid.videoName, "exercise", 1800)));
 
         res.json(urls);
+    },
+
+    async getReplies(req, res) {
+        const user = req.user;
+        const resp = await db.select().from(replies).where(eq(replies.patientId, user.id)).orderBy(replies.day);
+        return res.json(resp);
     }
 });
 
