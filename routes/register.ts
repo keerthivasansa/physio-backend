@@ -25,6 +25,7 @@ export function registerRoutes(app: Application) {
     app.get("/patient/dashboard", Patient.getDashboard);
     app.post("/patient/entry", Patient.postEntry);
     app.get("/patient/videos", Patient.getVideos);
+    app.get("/patient/replies", Patient.getReplies);
 
 
     // Doctor
