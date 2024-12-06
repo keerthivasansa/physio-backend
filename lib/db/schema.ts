@@ -12,7 +12,8 @@ export const patient = mysqlTable("patients", {
     doctorId: varchar("doctorId", { length: 64 }).notNull(),
     startDate: date("startDate").notNull(),
     totalDays: int("totalDays").notNull(),
-    age: int("age").notNull()
+    age: int("age").notNull(),
+    name: varchar("name", { length: 64 }).default("missing")
 });
 
 export const entry = mysqlTable("dayEntry", {

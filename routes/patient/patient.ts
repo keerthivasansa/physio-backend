@@ -1,9 +1,8 @@
 import { db } from "$lib/db";
 import { entry, exercise, patient } from "$lib/db/schema";
 import { getSignedUrl } from "$lib/storage/minio";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { createRouteGroup } from "routes/group";
-import { getDayDelta } from "./patient.service";
 
 
 const Patient = createRouteGroup({
@@ -74,7 +73,7 @@ const Patient = createRouteGroup({
                 eq(exercise.patientId, id),
                 eq(exercise.day, day),
             )
-        );
+        ).orderBy(asc(exercise.exerciseNo));
 
         const urls = await Promise.all(videos.map(vid => getSignedUrl(vid.videoName, "exercise", 1800)));
 

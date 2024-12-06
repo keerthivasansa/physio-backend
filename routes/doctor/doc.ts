@@ -1,7 +1,7 @@
 import { db } from "$lib/db";
 import { entry, exercise, patient, users } from "$lib/db/schema";
 import { uploadFile } from "$lib/storage/minio";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, max } from "drizzle-orm";
 import { createRouteGroup } from "routes/group";
 import { Readable } from "stream";
 import { getPatient, saveVideo } from "./doc.service";
@@ -24,13 +24,40 @@ export const Doctor = createRouteGroup({
         res.send("Registered")
     },
 
+    async getDashboard(req, res) {
+        // get day of each patient.
+        // count of patients.
+        if (!req.user) {
+            return res.status(403).send("not logged in");
+        }
+
+        const result = await db.select({ patient: exercise.patientId, day: max(exercise.day) }).from(exercise).groupBy(exercise.patientId);
+
+        const info = await db.select().from(users).where(eq(users.id, req.user.id));
+
+        const countRes = await db.select({ count: count() }).from(patient).where(eq(patient.doctorId, req.user.id));
+        const patientCount = countRes[0].count;
+
+        const dayCount = {};
+
+        result.forEach(res => {
+            dayCount[res.day+1] ??= 0;
+            dayCount[res.day+1] += 1;
+        });
+
+        dayCount[0] = patientCount - result.length;
+        console.log({ patientCount, result });
+
+        res.json({ info, dayCount, patientCount });
+    },
+
     async addPatient(req, res) {
-        const { age, password, id, totalDays, startDate } = req.body;
+        const { age, name, password, id, totalDays } = req.body;
         const user = req.user;
         if (!user || !user.isDoctor)
             return res.sendStatus(403);
 
-        const date = new Date(startDate);
+        const date = new Date();
 
         const h = await Bun.password.hash(password);
 
@@ -40,12 +67,14 @@ export const Doctor = createRouteGroup({
             password: h
         });
 
+        // @ts-ignore
         await db.insert(patient).values({
             age,
             id,
             totalDays,
             doctorId: user.id,
             startDate: date,
+            name
         });
 
         return res.send("Success")
@@ -129,6 +158,7 @@ export const Doctor = createRouteGroup({
             patient: string,
             exercises: string[],
         };
+        console.log(info);
 
         let alreadySaved = await db.select().from(exercise).where(
             and(
@@ -138,7 +168,12 @@ export const Doctor = createRouteGroup({
             )
         );
 
-        let toSave = info.exercises || [];
+        let toSave = info.exercises ?? [];
+        if (typeof toSave === 'string')
+            toSave = [toSave];
+
+        console.log({ toSave });
+
         const processed = new Set<string>();
 
         const matchSqlQuery = (name: string) => and(

@@ -1,8 +1,6 @@
 import express from 'express';
 import { registerRoutes } from './routes/register';
 import { registerAuthMiddleware } from './routes/auth/middleware';
-import { db } from '$lib/db';
-import { sql } from 'drizzle-orm';
 
 export const app = express();
 
@@ -11,6 +9,11 @@ app.get("/ping", (req, res) => {
 });
 
 app.use(express.json());
+
+app.use((req, res, next) => {
+    console.log(req.path, req.method, req.body);
+    next(null);
+});
 
 registerAuthMiddleware(app);
 registerRoutes(app);

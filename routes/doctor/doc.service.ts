@@ -21,23 +21,33 @@ export async function getPatient(docId: string, patientId: string) {
 }
 
 export async function saveVideo(day: number, patient: string, doctor: string, index: number, name: string, file?: Express.Multer.File) {
-    const res = await db.select().from(exercise).where(eq(exercise.videoName, name));
+    const res = await db.select().from(exercise).where(
+        and(
+            eq(exercise.doctorId, doctor),
+            eq(exercise.videoName, name),
+            eq(exercise.patientId, patient),
+            eq(exercise.day, day),
+        )
+    );
     if (!res.length && file) {
         const stream = Readable.from(file.buffer);
         await uploadFile(name, "exercise", stream);
-        await db.insert(exercise).values({
+        let res = await db.insert(exercise).values({
             patientId: patient,
             doctorId: doctor,
             day,
             exerciseNo: index,
             videoName: name,
         });
+        console.log(res);
+        console.log('uploaded file');
     } else if (res.length) {
         await db.update(exercise).set({
             exerciseNo: index
         }).where(
             eq(exercise.videoName, name)
         )
+        console.log('ADD');
     } else
         throw new Error("Sent filename without file and file doesn't already exist");
 };
