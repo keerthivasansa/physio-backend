@@ -151,6 +151,7 @@ export const Doctor = createRouteGroup({
                 fileMap.set(file.originalname, file);
             });
         }
+        console.log(fileMap)
         // [[string]]
 
         const info = req.body as {
@@ -241,11 +242,12 @@ export const Doctor = createRouteGroup({
 
     async saveReply(req, res) {
         const { patientId, reply, day } = req.body;
-        await db.insert(replies).values({
+        const r = await db.insert(replies).values({
             reply,
             patientId,
             day
         })
+        console.log(r);
         res.send('ok');
     }
 });

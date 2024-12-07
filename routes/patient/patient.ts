@@ -82,6 +82,7 @@ const Patient = createRouteGroup({
 
     async getReplies(req, res) {
         const user = req.user;
+        console.log(user);
         const resp = await db.select().from(replies).where(eq(replies.patientId, user.id)).orderBy(replies.day);
         return res.json(resp);
     }
